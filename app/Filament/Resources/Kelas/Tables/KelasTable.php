@@ -21,6 +21,7 @@ class KelasTable
                         ->withCount('siswa')
             )
             ->columns([
+                TextColumn::make('id')->color('danger'),
                 TextColumn::make('nama_kelas')
                     ->searchable(),
                 TextColumn::make('level')

@@ -49,7 +49,7 @@ class DiskonForm
                     TextInput::make('persentase')->suffix('%')->columnSpan(1)
                         ->visible(fn (callable $get) => $get('tipe') === 'persentase'),
                     TextInput::make('nominal')->numeric()->prefix('Rp.')->columnSpan('full')
-                    ->live() // Update setiap kali mengetik
+                    ->live(onBlur: true) // Update setiap kali mengetik
                     ->hint(fn ($state) => $state ? \App\Helpers\Terbilang::make($state) : null)
                     ->hintColor('primary')
                     ->visible(fn (callable $get) => $get('tipe') === 'nominal'),
