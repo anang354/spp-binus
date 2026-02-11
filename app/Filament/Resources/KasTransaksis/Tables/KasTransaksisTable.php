@@ -20,10 +20,10 @@ class KasTransaksisTable
             ->modifyQueryUsing(function (Builder $query) use ($table) {
                 // 1. Ambil Filter LANGSUNG dari Component Livewire (Pasti Akurat)
                 $livewire = $table->getLivewire();
-                
+
                 // Mengakses properti public $tableFilters milik component
-                $filters = $livewire->tableFilters; 
-                
+                $filters = $livewire->tableFilters;
+
                 $filterMetode = $filters['metode']['value'] ?? null;
                 $filterDariTanggal = $filters['rentang_tanggal']['dari_tanggal'] ?? null;
                 $filterSampaiTanggal = $filters['rentang_tanggal']['sampai_tanggal'] ?? null;
@@ -31,9 +31,9 @@ class KasTransaksisTable
                 // 2. Bangun Subquery Saldo
                 $subQuery = DB::table('kas_transaksis as sub')
                     ->selectRaw("SUM(
-                        CASE 
-                            WHEN sub.jenis_transaksi = 'masuk' THEN sub.jumlah 
-                            ELSE -sub.jumlah 
+                        CASE
+                            WHEN sub.jenis_transaksi = 'masuk' THEN sub.jumlah
+                            ELSE -sub.jumlah
                         END
                     )")
                     // Logika dasar: Hitung history ke belakang
@@ -46,7 +46,7 @@ class KasTransaksisTable
                     });
 
                 // 3. Terapkan Filter ke Subquery
-                
+
                 // A. Filter Metode
                 if ($filterMetode) {
                     $subQuery->where('sub.metode', $filterMetode);
@@ -64,7 +64,7 @@ class KasTransaksisTable
                 // 4. Inject Subquery ke Query Utama
                 $query->select('kas_transaksis.*') // Pastikan select all dari tabel utama
                     ->selectSub($subQuery, 'saldo_berjalan');
-                
+
                 return $query;
             })
             ->defaultSort('created_at', 'desc')
@@ -73,12 +73,13 @@ class KasTransaksisTable
                 TextColumn::make('metode')
                     ->badge()
                     ->color(fn (string $state): string => match ($state) {
-                        'tunai' => 'primary',
+                        'tunai' => 'success',
                         'non-tunai' => 'info',
                     }),
                 TextColumn::make('tanggal_transaksi')
                     ->date('d F Y'),
                 TextColumn::make('nomor_referensi')
+                    ->copyable()
                     ->toggleable(isToggledHiddenByDefault: true)
                     ->searchable(),
             TextColumn::make('masuk')
@@ -108,9 +109,9 @@ class KasTransaksisTable
                         ->label('Total Keluar')
                         ->numeric(decimalPlaces: 0)
                         ->using(fn ($query) => $query->where('jenis_transaksi', 'keluar')->sum('jumlah')),
-                        
                 ),
                 TextColumn::make('keterangan')
+                    ->words(5, end: ' ...')
                     ->searchable(),
                 TextColumn::make('saldo_berjalan')
                 ->label('Saldo')

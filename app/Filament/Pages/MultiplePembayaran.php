@@ -121,7 +121,7 @@ class MultiplePembayaran extends Page implements HasForms
                                     ->get()
                                     ->mapWithKeys(function ($tagihan) {
                                         $bulan = Carbon::createFromDate(null, $tagihan->periode_bulan, 1)->translatedFormat('F');
-                                        $label = "{$tagihan->daftar_biaya} - {$bulan} {$tagihan->periode_tahun} - Rp. " . number_format($tagihan->sisa_tagihan, 0, ",", ".");
+                                        $label = "{$tagihan->nama_tagihan} - {$bulan} {$tagihan->periode_tahun} - Rp. " . number_format($tagihan->sisa_tagihan, 0, ",", ".");
                                         return [$tagihan->id => $label];
                                     });
                             })
@@ -205,8 +205,8 @@ class MultiplePembayaran extends Page implements HasForms
             Action::make('cancel')
                 ->label('Batal')
                 ->color('gray')
-                ->url(fn () => auth()->user()->can('view_any_pembayaran') 
-                ? \App\Filament\Resources\PembayaranResource::getUrl('index') 
+                ->url(fn () => auth()->user()->can('view_any_pembayaran')
+                ? \App\Filament\Resources\PembayaranResource::getUrl('index')
                 : url('/admin')),
         ];
     }
@@ -220,13 +220,15 @@ class MultiplePembayaran extends Page implements HasForms
         $target = $getSiswa->nomor_hp;
         $tanggalPembayaran = Carbon::parse($data['tanggal_pembayaran'])->translatedFormat('d F Y');
          $totalBayar = 0;
+         $itemBayar = "";
         \DB::beginTransaction();
         foreach ($data['Tagihan'] as $bayar) {
             $tagihan = \App\Models\Tagihan::find($bayar['tagihan_id']);
             $bulanNama = \App\Models\Tagihan::BULAN[$tagihan->periode_bulan] ?? '-'; // Handle jika key tidak ada
             // $templatePesan .= "- {$tagihan->daftar_biaya} - {$bulanNama} {$tagihan->periode_tahun} : Rp. " . number_format($bayar['jumlah_dibayar'], 0, ",", ".") . "\n";
             $totalBayar += $bayar['jumlah_dibayar'];
-            
+            $itemBayar .= ' '.$tagihan->kategoriBiaya->nama_kategori.' '.$bulanNama;
+
             Pembayaran::create([
                 'siswa_id' => $data['siswa_id'],
                 'user_id' => auth()->user()->id,
@@ -242,7 +244,7 @@ class MultiplePembayaran extends Page implements HasForms
         // Logika simpan data tagihan/pembayaran Anda di sini...
         // (Gunakan logic yang sudah kita buat sebelumnya)
         if ($data['masukkan_kas'] ?? false) {
-            
+
             // Dapatkan kategori kas urutan pertama
             $kategori = \App\Models\KasKategori::first();
 
@@ -257,7 +259,7 @@ class MultiplePembayaran extends Page implements HasForms
                     'metode' => $data['metode_pembayaran'] === 'tunai' ? 'tunai' : 'non-tunai',
                     'jumlah' => $totalBayar,
                     // Keterangan: Nomor Bayar + Nama Siswa
-                    'keterangan' => $getSiswa->nama_siswa,
+                    'keterangan' => "{$getSiswa->nama_siswa} {$itemBayar}",
                 ]);
             }
         }
@@ -282,7 +284,7 @@ public function create()
     try {
         $this->handleSave();
         // Redirect setelah sukses
-        $this->redirect('/admin/pembayarans'); 
+        $this->redirect('/admin/pembayarans');
     } catch (\Exception $e) {
         // Error sudah dihandle di processPayment, biarkan form tetap terbuka
     }
@@ -294,7 +296,7 @@ public function createAnother(): void
 
     // Reset form agar kosong kembali untuk inputan berikutnya
     $this->form->fill();
-    
+
     // Reset total jika Anda menggunakan state manual
     $this->data['total_semua_dibayar'] = 0;
 }

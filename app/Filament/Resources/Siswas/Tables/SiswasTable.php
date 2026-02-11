@@ -78,6 +78,7 @@ class SiswasTable
                 //     ->rounded(),
                 TextColumn::make('nama_siswa')
                     ->sortable()
+                    ->copyable()
                     ->searchable(),
                 TextColumn::make('kelas.nama_kelas')
                     ->sortable(),
@@ -85,6 +86,7 @@ class SiswasTable
                 TextColumn::make('nama_wali')
                     ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('nomor_hp')
+                    ->copyable()
                     ->searchable(),
                 TextColumn::make('total_tagihan_belum_lunas')
                     ->label('Tagihan Belum Dibayar')
