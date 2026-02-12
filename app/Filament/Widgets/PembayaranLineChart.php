@@ -9,7 +9,7 @@ use Filament\Widgets\ChartWidget;
 
 class PembayaranLineChart extends ChartWidget
 {
-    protected ?string $heading = '💹 History Pembayaran 6 Bulan';
+    protected ?string $heading = '💹 History Pembayaran SPP 6 Bulan';
     protected static ?int $sort = 1;
 
     protected function getData(): array
@@ -17,7 +17,7 @@ class PembayaranLineChart extends ChartWidget
         $data = collect(range(5, 0))->mapWithKeys(function ($i) {
             $month = Carbon::now()->subMonths($i);
             $yearMonth = $month->format('Y-m');
-            
+
             // Menghitung total jumlah_dibayar dari tabel pembayarans
             $total = Pembayaran::where('tanggal_pembayaran', 'like', "{$yearMonth}%")
                 ->sum('jumlah_dibayar');
