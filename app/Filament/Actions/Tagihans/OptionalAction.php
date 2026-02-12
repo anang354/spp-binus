@@ -22,7 +22,7 @@ use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Components\Utilities\Set;
 
 
-class OptionalAction 
+class OptionalAction
 {
     public static function make(): Action
     {
@@ -83,6 +83,11 @@ class OptionalAction
                 $jenjang = $data['jenjang'];
                 $siswaIds = $data['siswa'];
                 $listBiaya = \App\Models\Biaya::whereIn('id', $biayaIds)->get();
+                $kategoriBiayaIds = [];
+                foreach($listBiaya as $item)
+                    {
+                        array_push($kategoriBiayaIds, $item->kategori_biaya_id);
+                    }
                 $getSiswa = \App\Models\Siswa::query()
                             ->whereIn('id', $siswaIds) // Mengambil hanya siswa yang dipilih di Select
                             ->where('is_active', true)  // Memastikan siswa masih berstatus aktif
@@ -94,6 +99,7 @@ class OptionalAction
                     foreach($getSiswa as $siswa) {
                         $check = Tagihan::where('siswa_id', $siswa->id)
                         ->where('jenis_tagihan', $jenisTagihan)
+                        ->whereIn('kategori_biaya_id', $kategoriBiayaIds)
                         ->where('periode_bulan', $data['periode_bulan'])
                         ->where('periode_tahun', $data['periode_tahun'])->count();
                         if($check === 0)

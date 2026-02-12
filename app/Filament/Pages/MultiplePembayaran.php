@@ -93,65 +93,62 @@ class MultiplePembayaran extends Page implements HasForms
                     ->afterStateUpdated(fn ($state, Set $set) => $set('Tagihan', [])),
 
                 Repeater::make('Tagihan')
-                    ->addActionLabel('Tambah Tagihan yang akan dibayar')
-                    ->afterStateUpdated(function ($state, Set $set) {
-                        $total = collect($state)
-                        ->map(fn ($item) => (int) ($item['jumlah_dibayar'] ?? 0))
-                        ->sum();
-                        $set('total_semua_dibayar', $total);
-                    })
                     ->label('Daftar Tagihan')
-                    ->default([])
+                    ->addActionLabel('Tambah Tagihan yang akan dibayar')
+                    ->reactive()
+                    ->afterStateUpdated(fn (Set $set, Get $get) => self::updateTotalSemua($set, $get)) // Update saat baris dihapus
                     ->schema([
                         Select::make('tagihan_id')
                             ->label('Tagihan')
+                            ->required()
                             ->reactive()
-                            ->options(function (Get $get, Set $set, $state) {
+                            ->distinct()
+                            ->disableOptionsWhenSelectedInSiblingRepeaterItems()
+                            ->options(function (Get $get) {
                                 $siswaId = $get('../../siswa_id');
                                 if (!$siswaId) return [];
 
-                                // Ambil tagihan yang sudah dipilih di repeater, kecuali yang dipilih di select ini
-                                $selectedTagihanIds = collect($get('../../Tagihan'))->pluck('tagihan_id')->filter(function ($id) use ($state) {
-                                    return $id !== null && $id !== $state; // Exclude null dan yang dipilih di select ini
-                                })->toArray();
-
                                 return \App\Models\Tagihan::where('siswa_id', $siswaId)
-                                    ->whereColumn('tagihan_netto', '>', DB::raw('(SELECT COALESCE(SUM(jumlah_dibayar), 0) FROM pembayarans WHERE pembayarans.tagihan_id = tagihans.id)'))
-                                    ->whereNotIn('id', $selectedTagihanIds) // Exclude yang sudah dipilih di item lain
+                                    ->whereRaw('(tagihan_netto - (SELECT COALESCE(SUM(jumlah_dibayar), 0) FROM pembayarans WHERE pembayarans.tagihan_id = tagihans.id)) > 0')
                                     ->get()
                                     ->mapWithKeys(function ($tagihan) {
-                                        $bulan = Carbon::createFromDate(null, $tagihan->periode_bulan, 1)->translatedFormat('F');
-                                        $label = "{$tagihan->nama_tagihan} - {$bulan} {$tagihan->periode_tahun} - Rp. " . number_format($tagihan->sisa_tagihan, 0, ",", ".");
-                                        return [$tagihan->id => $label];
+                                        $bulan = \Carbon\Carbon::createFromDate(null, $tagihan->periode_bulan, 1)->translatedFormat('F');
+                                        return [$tagihan->id => "{$tagihan->nama_tagihan} - {$bulan} {$tagihan->periode_tahun} - Rp. " . number_format($tagihan->sisa_tagihan, 0, ",", ".")];
                                     });
                             })
-                            ->required(),
+                            ->afterStateUpdated(function ($state, Set $set, Get $get) {
+                                if ($state) {
+                                    $tagihan = \App\Models\Tagihan::find($state);
+                                    if ($tagihan) {
+                                        $set('jumlah_dibayar', $tagihan->sisa_tagihan);
+                                    }
+                                }
+                                // Paksa update total semua setelah tagihan dipilih dan nominal otomatis terisi
+                                self::updateTotalSemua($set, $get);
+                            }),
 
                         TextInput::make('jumlah_dibayar')
                             ->numeric()
-                            ->live(onBlur: true)
-                            ->hint(fn ($state) => 'Terbilang : ' . \App\Helpers\Terbilang::make((int) $state))
-                            ->hintColor('gray')
+                            ->required()
+                            ->live(onBlur: true) // Mengirim state ke server saat kursor keluar dari box
                             ->rules([
-                                fn ($get): \Closure => function (string $attribute, $value, \Closure $fail) use ($get) {
+                                fn (Get $get): \Closure => function (string $attribute, $value, \Closure $fail) use ($get) {
                                     $tagihanId = $get('tagihan_id');
                                     if (!$tagihanId) return;
 
                                     $tagihan = \App\Models\Tagihan::find($tagihanId);
                                     if (!$tagihan) return;
 
-                                    // Hitung sisa tagihan asli (tagihan_netto dikurangi pembayaran yang sudah masuk sebelumnya)
-                                    $totalTerbayar = \App\Models\Pembayaran::where('tagihan_id', $tagihanId)->sum('jumlah_dibayar');
-                                    $sisaTagihan = $tagihan->tagihan_netto - $totalTerbayar;
+                                    $totalTerbayar = \App\Models\Pembayaran::where('tagihan_id', $tagihanId)->sum('jumlah_dibayar'); //
+                                    $sisaTagihan = $tagihan->tagihan_netto - $totalTerbayar; //
 
                                     if ($value > $sisaTagihan) {
-                                        $fail("Nominal melebihi sisa tagihan. Maksimal pembayaran adalah Rp. " . number_format($sisaTagihan, 0, ',', '.'));
+                                        $fail("Nominal melebihi sisa tagihan. Maksimal adalah Rp. " . number_format($sisaTagihan, 0, ',', '.'));
                                     }
                                 },
                             ])
-                            ->required(),
+                            ->afterStateUpdated(fn (Set $set, Get $get) => self::updateTotalSemua($set, $get)),
                     ])
-                    ->minItems(1)
                     ->columns(2),
                 Grid::make([
                     'sm' => 1,
@@ -183,6 +180,20 @@ class MultiplePembayaran extends Page implements HasForms
                     ->label('Kirim Notif WA')
                     ->default(true),
             ]);
+    }
+    public static function updateTotalSemua(Set $set, Get $get): void
+    {
+        // Mengambil state 'Tagihan' dari level yang tepat
+        // Jika dipanggil dari dalam repeater, gunakan ../../Tagihan
+        // Jika dipanggil dari level repeater, gunakan Tagihan
+        $repeaterState = $get('Tagihan') ?? $get('../../Tagihan') ?? [];
+
+        $total = collect($repeaterState)
+            ->map(fn ($item) => (int) ($item['jumlah_dibayar'] ?? 0))
+            ->sum();
+
+        // Set field total_semua_dibayar yang berada di luar repeater
+        $set('../../total_semua_dibayar', $total);
     }
 
     protected function getFormActions(): array

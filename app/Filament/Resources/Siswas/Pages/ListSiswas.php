@@ -4,6 +4,8 @@ namespace App\Filament\Resources\Siswas\Pages;
 
 use Filament\Actions\CreateAction;
 use Filament\Actions\ImportAction;
+use App\Exports\SiswaTagihanExport;
+use Maatwebsite\Excel\Facades\Excel;
 use App\Filament\Imports\SiswaImporter;
 use Filament\Resources\Pages\ListRecords;
 use Filament\Schemas\Components\Tabs\Tab;
@@ -45,7 +47,13 @@ class ListSiswas extends ListRecords
             ImportAction::make()
                 ->icon('heroicon-o-document-arrow-up')
                 ->color('success')
+                ->visible(fn () => auth()->user()->role !== 'viewer')
                 ->importer(SiswaImporter::class),
+            \Filament\Actions\Action::make('exportTunggakan')
+                ->label('Export Tunggakan')
+                ->icon('heroicon-o-document-arrow-down')
+                ->color('warning')
+                ->action(fn () => Excel::download(new SiswaTagihanExport, 'Tunggakan_' . now()->format('M_Y') . '.xlsx')),
         ];
     }
 }

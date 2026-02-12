@@ -78,11 +78,16 @@ class CreateAction
                 $jenjang = $data['jenjang'];
                 $kelasIds = $data['kelas'];
                 $listBiaya = \App\Models\Biaya::whereIn('id', $biayaIds)->get();
+                $kategoriBiayaIds = [];
+                foreach($listBiaya as $item)
+                    {
+                        array_push($kategoriBiayaIds, $item->kategori_biaya_id);
+                    }
                 $getSiswa = \App\Models\Siswa::where('is_active', true)
                     ->whereHas('kelas', function ($query) use ($jenjang, $kelasIds) {
                         $query->where('jenjang', $jenjang)->whereIn('id', $kelasIds);
                     })
-                    ->with('diskon.biaya') 
+                    ->with('diskon.biaya')
                     ->get();
                 DB::beginTransaction();
                 try {
@@ -90,6 +95,7 @@ class CreateAction
                     foreach($getSiswa as $siswa) {
                         $check = Tagihan::where('siswa_id', $siswa->id)
                         ->where('jenis_tagihan', $jenisTagihan)
+                        ->whereIn('kategori_biaya_id', $kategoriBiayaIds)
                         ->where('periode_bulan', $data['periode_bulan'])
                         ->where('periode_tahun', $data['periode_tahun'])->count();
                         if($check === 0)

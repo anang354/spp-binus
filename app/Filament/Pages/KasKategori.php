@@ -24,6 +24,11 @@ class KasKategori extends Page implements HasTable
     protected static string | UnitEnum | null $navigationGroup = 'Buku Kas';
     protected static ?int $navigationSort = 2;
 
+    public static function canAccess() : bool
+    {
+        return auth()->user()->role === 'admin' || auth()->user()->role === 'editor';
+    }
+
     public static function getKasKategoriForm(): array
     {
         return [

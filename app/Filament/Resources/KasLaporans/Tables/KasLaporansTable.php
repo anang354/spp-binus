@@ -65,7 +65,7 @@ class KasLaporansTable
             ->toolbarActions([
                 BulkActionGroup::make([
                     DeleteBulkAction::make(),
-                ]),
+                ])->visible(fn () => auth()->user()->role !== 'viewer'),
             ]);
     }
 }

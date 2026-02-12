@@ -6,6 +6,8 @@ use Carbon\Carbon;
 use App\Models\Tagihan;
 use Filament\Tables\Table;
 use Filament\Actions\EditAction;
+use App\Exports\SiswaTagihanExport;
+use Maatwebsite\Excel\Facades\Excel;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Tables\Columns\TextColumn;
@@ -144,8 +146,15 @@ class TagihansTable
                 // <<< AKHIR FILTER TAHUN >>>
             ])
             ->headerActions([
-                \App\Filament\Actions\Tagihans\CreateAction::make(),
-                \App\Filament\Actions\Tagihans\OptionalAction::make(),
+                \App\Filament\Actions\Tagihans\CreateAction::make()
+                    ->visible(fn () => auth()->user()->role !== 'viewer'),
+                \App\Filament\Actions\Tagihans\OptionalAction::make()
+                    ->visible(fn () => auth()->user()->role !== 'viewer'),
+                \Filament\Actions\Action::make('exportTunggakan')
+                    ->label('Export Tunggakan')
+                    ->icon('heroicon-o-document-arrow-down')
+                    ->color('warning')
+                    ->action(fn () => Excel::download(new SiswaTagihanExport, 'Tunggakan_' . now()->format('M_Y') . '.xlsx')),
             ])
             ->recordActions([
                 EditAction::make(),
@@ -153,7 +162,7 @@ class TagihansTable
             ->toolbarActions([
                 BulkActionGroup::make([
                     DeleteBulkAction::make(),
-                ]),
+                ])->visible(fn () => auth()->user()->role !== 'viewer'),
             ]);
     }
 }

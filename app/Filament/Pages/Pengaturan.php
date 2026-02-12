@@ -16,7 +16,7 @@ use Filament\Forms\Concerns\InteractsWithForms;
 class Pengaturan extends Page implements HasForms
 {
     use InteractsWithForms;
-    
+
     protected string $view = 'filament.pages.pengaturan';
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedCog6Tooth;
@@ -24,6 +24,11 @@ class Pengaturan extends Page implements HasForms
     public ?array $data = [];
 
     public ?\App\Models\Pengaturan $record = null;
+
+    public static function canAccess() : bool
+    {
+        return auth()->user()->role === 'admin' || auth()->user()->role === 'editor';
+    }
 
     public function mount(): void
     {
@@ -88,15 +93,15 @@ class Pengaturan extends Page implements HasForms
     {
         try {
             $data = $this->form->getState();
- 
+
             $this->record->update($data);
         } catch (Halt $exception) {
             return;
         }
- 
-        \Filament\Notifications\Notification::make() 
+
+        \Filament\Notifications\Notification::make()
             ->success()
             ->title('Berhasil menyimpan data')
-            ->send(); 
+            ->send();
     }
 }

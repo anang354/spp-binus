@@ -84,7 +84,7 @@ class PembayaransTable
                         return $query->when(
                             $data['value'],
                             fn (Builder $query, $value): Builder => $query->whereHas(
-                                'tagihan', 
+                                'tagihan',
                                 fn ($q) => $q->where('jenis_tagihan', $value)
                             )
                         );
@@ -106,7 +106,7 @@ class PembayaransTable
             ->toolbarActions([
                 BulkActionGroup::make([
                     DeleteBulkAction::make(),
-                ]),
+                ])->visible(fn () => auth()->user()->role !== 'viewer'),
             ]);
     }
 }

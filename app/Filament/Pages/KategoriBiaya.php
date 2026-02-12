@@ -25,6 +25,11 @@ class KategoriBiaya extends Page implements HasTable
     protected static string | UnitEnum | null $navigationGroup = 'Biaya';
     protected static ?int $navigationSort = 4;
 
+    public static function canAccess() : bool
+    {
+        return auth()->user()->role === 'admin' || auth()->user()->role === 'editor';
+    }
+
     public static function getKategoriBiayaForm(): array
     {
         return [

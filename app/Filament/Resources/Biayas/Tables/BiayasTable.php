@@ -59,7 +59,7 @@ class BiayasTable
                     DeleteBulkAction::make(),
                     ForceDeleteBulkAction::make(),
                     RestoreBulkAction::make(),
-                ]),
+                ])->visible(fn () => auth()->user()->role !== 'viewer'),
             ]);
     }
 }

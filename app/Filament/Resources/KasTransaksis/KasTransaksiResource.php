@@ -18,11 +18,12 @@ use UnitEnum;
 class KasTransaksiResource extends Resource
 {
     protected static ?string $model = KasTransaksi::class;
+    protected static ?string $navigationLabel = 'Catatan Kas';
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedFire;
     protected static string | UnitEnum | null $navigationGroup = 'Buku Kas';
     protected static ?int $navigationSort = 1;
-    
+
     public static function form(Schema $schema): Schema
     {
         return KasTransaksiForm::configure($schema);

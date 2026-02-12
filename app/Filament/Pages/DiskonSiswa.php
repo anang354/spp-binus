@@ -35,8 +35,13 @@ class DiskonSiswa extends Page implements  HasForms, HasTable
     public $editDiskonIds = [];
     public $isEditModalOpen = false;
 
- 
+
     protected string $view = 'filament.pages.diskon-siswa';
+
+    public static function canAccess() : bool
+    {
+        return auth()->user()->role === 'admin' || auth()->user()->role === 'editor';
+    }
 
     protected function getTableQuery()
     {
@@ -82,18 +87,18 @@ class DiskonSiswa extends Page implements  HasForms, HasTable
                 ])
             ->action(function ($record, array $data) {
                     $siswa = $record;
-        
+
                     // Buat pivot data dengan user_id
                     $pivotData = collect($data['diskon_ids'])->mapWithKeys(function ($diskonId) {
                         return [$diskonId => ['user_id' => Auth::id()]];
                     })->toArray();
-        
+
                     $siswa->diskon()->sync($pivotData); // Replace diskon siswa
                 })
             ->modalHeading('Edit Diskon Siswa')
         ]);
     }
-    
+
 
     public function submit()
     {

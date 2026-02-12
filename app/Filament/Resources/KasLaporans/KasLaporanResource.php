@@ -18,6 +18,7 @@ use UnitEnum;
 class KasLaporanResource extends Resource
 {
     protected static ?string $model = KasLaporan::class;
+    protected static ?string $navigationLabel = 'Laporan Kas';
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedClipboardDocumentList;
     protected static string | UnitEnum | null $navigationGroup = 'Buku Kas';

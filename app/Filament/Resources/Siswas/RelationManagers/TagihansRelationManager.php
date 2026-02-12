@@ -15,6 +15,7 @@ use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\DissociateAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Forms\Components\TextInput;
+use Illuminate\Database\Eloquent\Builder;
 use Filament\Actions\DissociateBulkAction;
 use Filament\Tables\Columns\Summarizers\Sum;
 use Filament\Resources\RelationManagers\RelationManager;
@@ -31,17 +32,16 @@ class TagihansRelationManager extends RelationManager
     public function table(Table $table): Table
     {
         return $table
-            ->query(
-                    Tagihan::query()
-                        ->with('pembayaran')
-                        ->selectRaw('
+            ->modifyQueryUsing(function (Builder $query): Builder {
+                return $query->with('pembayaran')
+                    ->selectRaw('
                     tagihans.*,
                     (SELECT COALESCE(SUM(jumlah_dibayar), 0) FROM pembayarans WHERE pembayarans.tagihan_id = tagihans.id) as total_dibayar,
                     (tagihan_netto - (SELECT COALESCE(SUM(jumlah_dibayar), 0) FROM pembayarans WHERE pembayarans.tagihan_id = tagihans.id)) as sisa_tagihan
                 ')
-                        ->orderByDesc('created_at')
-                )
-            ->recordTitleAttribute('nama_tagihan')
+                    ->orderByDesc('jatuh_tempo');
+            })
+            ->recordTitleAttribute('id')
             ->columns([
                 TextColumn::make('nama_tagihan')
                     ->searchable(),
