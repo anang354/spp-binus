@@ -127,6 +127,7 @@ class DiskonSiswa extends Page implements  HasForms, HasTable
     {
         return [
             Select::make('siswa_id')
+                ->prefixIcon(Heroicon::User)
                 ->label('Pilih Siswa')
                 ->options(\App\Models\Siswa::pluck('nama_siswa', 'id'))
                 ->searchable()
@@ -134,6 +135,7 @@ class DiskonSiswa extends Page implements  HasForms, HasTable
                 ->required(),
 
             Select::make('diskon_ids')
+                ->prefixIcon(Heroicon::PercentBadge)
                 ->label('Pilih Diskon')
                 ->multiple()
                 ->options(function (Get $get){

@@ -6,6 +6,7 @@ use Closure;
 use Filament\Schemas\Schema;
 use Illuminate\Support\Facades\DB;
 use Filament\Forms\Components\Radio;
+use Filament\Support\Icons\Heroicon;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Components\Grid;
@@ -32,6 +33,7 @@ class PembayaranForm
                         ->schema([
                             Select::make('siswa_id')
                                 ->label('Pilih Siswa')
+                                ->prefixIcon(Heroicon::User)
                                 ->options(\App\Models\Siswa::all()->pluck('nama_siswa', 'id'))
                                 ->preload()
                                 ->live()
@@ -41,6 +43,7 @@ class PembayaranForm
                                 ->searchable()
                                 ->columnSpan(1),
                             Select::make('tagihan_id')
+                                ->prefixIcon(Heroicon::Newspaper)
                                 ->label('Tagihan')
                                 ->options(function (callable $get) {
                                     return \App\Models\Tagihan::where('siswa_id', $get('siswa_id'))
@@ -181,13 +184,19 @@ class PembayaranForm
 
                     ]),
                 Toggle::make('masukkan_kas')
+                    ->onIcon(Heroicon::Bookmark)
+                    ->offIcon(Heroicon::BookmarkSlash)
+                    ->columnSpanFull()
                     ->label('Masukkan ke Kas')
                     ->default(true)
                     ->dehydrated(false) // Penting: Agar tidak error karena kolom tidak ada di tabel pembayarans
                     ->hidden(fn (string $operation): bool => $operation === 'edit')
                     ->live(),
                 Toggle::make('is_whatsapp_sent')
+                    ->onIcon(Heroicon::Bell)
+                    ->offIcon(Heroicon::BellSlash)
                     ->label('Kirim Notif Whatsapp')
+                    ->columnSpanFull()
                     ->default(true)
                     ->hidden(fn (string $operation): bool => $operation === 'edit')
                     ->dehydrated(false),

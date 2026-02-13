@@ -89,6 +89,7 @@ class MultiplePembayaran extends Page implements HasForms
                                 '2xl' => 3,
                             ]),
                         TextInput::make('keterangan')
+                            ->prefixIcon(Heroicon::PencilSquare)
                             ->columnSpan([
                                 'sm' => 'full',
                                 'xl' => 2,
@@ -97,6 +98,7 @@ class MultiplePembayaran extends Page implements HasForms
                     ]),
                 Select::make('siswa_id')
                     ->label('Pilih Siswa')
+                    ->prefixIcon(Heroicon::User)
                     ->options(\App\Models\Siswa::all()->pluck('nama_siswa', 'id')->toArray())
                     ->searchable()
                     ->reactive()
@@ -139,6 +141,7 @@ class MultiplePembayaran extends Page implements HasForms
                             }),
 
                         TextInput::make('jumlah_dibayar')
+                            ->prefix('Rp. ')
                             ->numeric()
                             ->required()
                             ->hint(fn ($state) => $state ? \App\Helpers\Terbilang::make($state) : null)
@@ -187,9 +190,13 @@ class MultiplePembayaran extends Page implements HasForms
                         ->visibility('private'),
                 ]),
                 Toggle::make('masukkan_kas')
+                    ->onIcon(Heroicon::Bookmark)
+                    ->offIcon(Heroicon::BookmarkSlash)
                     ->label('Masukkan ke Kas')
                     ->default(true),
                 Toggle::make('is_whatsapp')
+                    ->onIcon(Heroicon::Bell)
+                    ->offIcon(Heroicon::BellSlash)
                     ->label('Kirim Notif WA')
                     ->default(true),
             ]);

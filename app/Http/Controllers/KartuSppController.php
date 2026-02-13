@@ -23,7 +23,7 @@ class KartuSppController extends Controller
             $image = 'data:image/' . $type . ';base64,' . base64_encode($data);
         } else {
             // Sediakan gambar fallback jika logo tidak ditemukan
-            $image = null; 
+            $image = null;
         }
         // $urlCode = route('verification', ['encrypted_nisn' => \Illuminate\Support\Facades\Crypt::encryptString($siswa['nisn'])]);
         // $qrCode =  base64_encode(\SimpleSoftwareIO\QrCode\Facades\QrCode::format('svg')->size(100)->generate($urlCode));

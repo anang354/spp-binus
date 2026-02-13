@@ -4,6 +4,7 @@ namespace App\Filament\Resources\Biayas\Schemas;
 
 use Filament\Schemas\Schema;
 use Filament\Forms\Components\Radio;
+use Filament\Support\Icons\Heroicon;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 
@@ -16,6 +17,7 @@ class BiayaForm
                 TextInput::make('nama_biaya')
                     ->required()->columnSpan(2),
                  Select::make('kategori_biaya_id')
+                    ->prefixIcon(Heroicon::Tag)
                     ->relationship('kategoriBiaya', 'nama_kategori')
                     ->required()->columnSpan(2),
                 TextInput::make('nominal')->numeric()->prefix('Rp.')->required()

@@ -111,6 +111,14 @@ class SiswasTable
                 TrashedFilter::make(),
             ])
             ->recordActions([
+                \Filament\Actions\Action::make('lihat-pdf')
+                    ->color('success')
+                    ->label('Kartu SPP')
+                    ->icon('heroicon-o-document-arrow-down')
+                    ->url(function ($record) {
+                        return url('/admin/siswas/kartu-spp/'.$record->id);
+                    })
+                    ->openUrlInNewTab(),
                 EditAction::make(),
                 RestoreAction::make(),
                 ForceDeleteAction::make(),

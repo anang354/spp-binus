@@ -149,6 +149,13 @@ class PembayaransTable
             ])
             ->recordActions([
                 EditAction::make(),
+                \Filament\Actions\Action::make('kwitansi')
+                    ->label('Kwitansi')
+                    ->color('success')
+                    ->icon('heroicon-o-printer')
+                    ->url(function($record) {
+                        return url('/admin/pembayarans/kwitansi/'.$record->nomor_bayar);
+                    })->openUrlInNewTab(),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
