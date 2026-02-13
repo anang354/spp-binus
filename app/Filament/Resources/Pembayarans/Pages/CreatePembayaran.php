@@ -16,6 +16,30 @@ class CreatePembayaran extends CreateRecord
         // 2. Ambil record pembayaran yang baru saja disimpan
         $pembayaran = $this->record;
 
+        if($formData['is_whatsapp_sent'] ?? false) {
+            $pengaturan = \App\Models\Pengaturan::first();
+            $token = $pengaturan->token_wa;
+            if ($pengaturan && $pengaturan->wa_active)
+            {
+                $templatePesan = $pengaturan->pesan3;
+                $bulan = \App\Models\Tagihan::BULAN[$pembayaran->tagihan->periode_bulan];
+                $daftarPembayaran = "";
+                $daftarPembayaran .= "- *{$pembayaran->tagihan->nama_tagihan}* ({$bulan} {$pembayaran->tagihan->periode_tahun}): Rp " . number_format($pembayaran->jumlah_dibayar, 0, ',', '.') . "\n";
+                $params = [
+                    '{nomor_bayar}'  => $pembayaran->nomor_bayar,
+                    '{tanggal_pembayaran}' => $pembayaran->tanggal_pembayaran,
+                    '{nama_siswa}' => $pembayaran->siswa->nama_siswa,
+                    '{nama_wali}' => $pembayaran->siswa->nama_wali,
+                    '{daftar_pembayaran}' => $daftarPembayaran,
+                    '{total_pembayaran}' => number_format($pembayaran->jumlah_dibayar, 0, ',', '.'),
+                ];
+                $pesanFinal = str_replace(array_keys($params), array_values($params), $templatePesan);
+                $target = $pembayaran->siswa->nomor_hp;
+                $this->kirimPesan($pesanFinal, $target, $token);
+            }
+
+        }
+
         // 3. Cek jika user mengaktifkan toggle 'masukkan_kas'
         if ($formData['masukkan_kas'] ?? false) {
 
@@ -38,5 +62,33 @@ class CreatePembayaran extends CreateRecord
                 ]);
             }
         }
+    }
+
+    protected function kirimPesan($pesanFinal, $target, $token)
+    {
+        $curl = curl_init();
+            curl_setopt_array($curl, array(
+                CURLOPT_URL => 'https://api.fonnte.com/send',
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_ENCODING => '',
+                CURLOPT_MAXREDIRS => 10,
+                CURLOPT_TIMEOUT => 0,
+                CURLOPT_FOLLOWLOCATION => true,
+                CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+                CURLOPT_CUSTOMREQUEST => 'POST',
+                CURLOPT_POSTFIELDS => http_build_query(array(
+                    'target' => $target,
+                    'message' => $pesanFinal,
+                )),
+                CURLOPT_HTTPHEADER => array(
+                    "Authorization: $token"
+                ),
+            ));
+            $response = curl_exec($curl);
+            if (curl_errno($curl)) {
+                $error_msg = curl_error($curl);
+                // Log error jika perlu
+            }
+            curl_close($curl);
     }
 }

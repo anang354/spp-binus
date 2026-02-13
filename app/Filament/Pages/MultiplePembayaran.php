@@ -244,19 +244,20 @@ class MultiplePembayaran extends Page implements HasForms
     protected function handleSave(): void
 {
     $nomorBayar = Pembayaran::generateNomorBayar();
+    $daftarPembayaran = "";
+    $data = $this->form->getState();
+    $getSiswa = \App\Models\Siswa::select('nama_siswa', 'nomor_hp')->findOrFail($data['siswa_id']);
+    $siswaNama = $getSiswa->nama_siswa;
+    $target = $getSiswa->nomor_hp;
+    $tanggalPembayaran = Carbon::parse($data['tanggal_pembayaran'])->translatedFormat('d F Y');
+     $totalBayar = 0;
+     $itemBayar = "";
     try {
-        $data = $this->form->getState();
-        $getSiswa = \App\Models\Siswa::select('nama_siswa', 'nomor_hp')->findOrFail($data['siswa_id']);
-        $siswaNama = $getSiswa->nama_siswa;
-        $target = $getSiswa->nomor_hp;
-        $tanggalPembayaran = Carbon::parse($data['tanggal_pembayaran'])->translatedFormat('d F Y');
-         $totalBayar = 0;
-         $itemBayar = "";
         \DB::beginTransaction();
         foreach ($data['Tagihan'] as $bayar) {
             $tagihan = \App\Models\Tagihan::find($bayar['tagihan_id']);
             $bulanNama = \App\Models\Tagihan::BULAN[$tagihan->periode_bulan] ?? '-'; // Handle jika key tidak ada
-            // $templatePesan .= "- {$tagihan->daftar_biaya} - {$bulanNama} {$tagihan->periode_tahun} : Rp. " . number_format($bayar['jumlah_dibayar'], 0, ",", ".") . "\n";
+            $daftarPembayaran .= "- {$tagihan->nama_tagihan} - {$bulanNama} {$tagihan->periode_tahun} : Rp. " . number_format($bayar['jumlah_dibayar'], 0, ",", ".") . "\n";
             $totalBayar += $bayar['jumlah_dibayar'];
             $itemBayar .= ' '.$tagihan->kategoriBiaya->nama_kategori.' '.$bulanNama;
 
@@ -296,6 +297,20 @@ class MultiplePembayaran extends Page implements HasForms
             }
         }
         \DB::commit();
+        $pengaturan = \App\Models\Pengaturan::select('token_wa', 'pesan3', 'wa_active')->first();
+        $token = $pengaturan->token_wa;
+        if($pengaturan->wa_active)
+            {
+                $params = [
+                    '{nomor_bayar}'  => $nomorBayar,
+                    '{tanggal_pembayaran}' => $data['tanggal_pembayaran'],
+                    '{nama_siswa}' => $siswaNama,
+                    '{daftar_pembayaran}' => $daftarPembayaran,
+                    '{total_pembayaran}' => number_format($totalBayar, 0, ',', '.'),
+                ];
+                $pesanFinal = str_replace(array_keys($params), array_values($params), $pengaturan->pesan3);
+                $this->kirimPesanWhatsapp($pesanFinal, $target, $token);
+            }
         Notification::make()
                     ->success()
                     ->title('Pembayaran berhasil disimpan')
@@ -332,4 +347,30 @@ public function createAnother(): void
     // Reset total jika Anda menggunakan state manual
     $this->data['total_semua_dibayar'] = 0;
 }
+    public function kirimPesanWhatsapp($pesanFinal, $target, $token) {
+        $curl = curl_init();
+            curl_setopt_array($curl, array(
+                CURLOPT_URL => 'https://api.fonnte.com/send',
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_ENCODING => '',
+                CURLOPT_MAXREDIRS => 10,
+                CURLOPT_TIMEOUT => 0,
+                CURLOPT_FOLLOWLOCATION => true,
+                CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+                CURLOPT_CUSTOMREQUEST => 'POST',
+                CURLOPT_POSTFIELDS => http_build_query(array(
+                    'target' => $target,
+                    'message' => $pesanFinal,
+                )),
+                CURLOPT_HTTPHEADER => array(
+                    "Authorization: $token"
+                ),
+            ));
+            $response = curl_exec($curl);
+            if (curl_errno($curl)) {
+                $error_msg = curl_error($curl);
+                // Log error jika perlu
+            }
+            curl_close($curl);
+    }
 }

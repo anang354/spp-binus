@@ -163,6 +163,7 @@ class TagihansTable
                 BulkActionGroup::make([
                     DeleteBulkAction::make(),
                     \App\Filament\Actions\Tagihans\BroadcastTagihanAction::make(),
+                    \App\Filament\Actions\Tagihans\FollowUpTagihanAction::make(),
                 ])->visible(fn () => auth()->user()->role !== 'viewer'),
             ]);
     }

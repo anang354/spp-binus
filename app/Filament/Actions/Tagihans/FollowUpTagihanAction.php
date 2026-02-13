@@ -7,19 +7,19 @@ use Filament\Actions\BulkAction;
 use Filament\Notifications\Notification;
 use Illuminate\Database\Eloquent\Collection;
 
-class BroadcastTagihanAction
+class FollowUpTagihanAction
 {
     public static function make(): BulkAction
     {
-        return BulkAction::make('pesan1')
+        return BulkAction::make('pesan2')
             ->icon('heroicon-o-chat-bubble-bottom-center-text')
-            ->color('primary')
-            ->label('Broadcast Tagihan')
+            ->color('warning')
+            ->label('Follow-up Tagihan')
             ->action(function (Collection $records) {
                 // 1. Ambil template dari tabel pengaturans
-                $settings = \App\Models\Pengaturan::select('pesan1', 'token_wa')->first();
+                $settings = \App\Models\Pengaturan::select('pesan2', 'token_wa')->first();
                 $token = $settings->token_wa;
-                $templateAsli = $settings ? $settings->pesan1 : "Yth {nama_wali}, tagihan {nama_siswa} adalah {total_tagihan}";
+                $templateAsli = $settings ? $settings->pesan2 : "Yth {nama_wali}, tagihan {nama_siswa} adalah {total_tagihan}";
 
                 // 2. Kelompokkan tagihan berdasarkan siswa_id
                 $groupedBySiswa = $records->groupBy('siswa_id');

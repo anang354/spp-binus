@@ -31,9 +31,11 @@ class SiswaForm
                 TextInput::make('alamat')
                     ->default(null),
                 TextInput::make('nomor_hp')
-                    ->numeric()
-                    ->default(null),
+                    ->prefix('+62')
+                    ->hintColor('danger')
+                    ->numeric(),
                 Toggle::make('is_active')
+                    ->hiddenOn('create')
                     ->default(true)
                     ->required(),
                 FileUpload::make('foto')
