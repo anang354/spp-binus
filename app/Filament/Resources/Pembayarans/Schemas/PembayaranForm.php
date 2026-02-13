@@ -63,8 +63,16 @@ class PembayaranForm
                                     $bulan = \Carbon\Carbon::createFromDate(null, $tagihan->periode_bulan, 1)->translatedFormat('F');
                                     // Catatan: sisa_tagihan mungkin perlu dicek aksesornnya di model Tagihan
                                     $sisa = number_format($tagihan->sisa_tagihan, 0, ",", ".");
-                                    
+
                                     return "{$tagihan->nama_biaya} {$bulan} {$tagihan->periode_tahun} - Rp.{$sisa}";
+                                })
+                                ->afterStateUpdated(function ($state, Set $set, Get $get) {
+                                    if ($state) {
+                                        $tagihan = \App\Models\Tagihan::find($state);
+                                        if ($tagihan) {
+                                            $set('jumlah_dibayar', $tagihan->sisa_tagihan);
+                                        }
+                                    }
                                 })
                                 ->reactive()
                                 ->searchable()
@@ -163,7 +171,7 @@ class PembayaranForm
                                 ->downloadable() // <<< Penting: Mengizinkan file didownload dari Filament
                                 ->previewable() // <<< Opsional: Memungkinkan pratinjau gambar atau PDF (jika didukung browser)
                                 ->visibility('private'),
-                        
+
                     ]),
                 Toggle::make('masukkan_kas')
                     ->label('Masukkan ke Kas')

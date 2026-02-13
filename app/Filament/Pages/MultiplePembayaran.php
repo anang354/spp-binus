@@ -130,6 +130,8 @@ class MultiplePembayaran extends Page implements HasForms
                         TextInput::make('jumlah_dibayar')
                             ->numeric()
                             ->required()
+                            ->hint(fn ($state) => $state ? \App\Helpers\Terbilang::make($state) : null)
+                            ->hintColor('primary')
                             ->live(onBlur: true) // Mengirim state ke server saat kursor keluar dari box
                             ->rules([
                                 fn (Get $get): \Closure => function (string $attribute, $value, \Closure $fail) use ($get) {

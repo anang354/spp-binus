@@ -43,7 +43,7 @@ class TagihansTable
                     return $date->translatedFormat('F Y');
                 }),
                 TextColumn::make('siswa.nama_siswa')
-                    ->sortable(),
+                    ->searchable(),
                 TextColumn::make('siswa.kelas.nama_kelas'),
                 TextColumn::make('kategoriBiaya.nama_kategori')
                     ->toggleable(isToggledHiddenByDefault: true)
@@ -162,6 +162,7 @@ class TagihansTable
             ->toolbarActions([
                 BulkActionGroup::make([
                     DeleteBulkAction::make(),
+                    \App\Filament\Actions\Tagihans\BroadcastTagihanAction::make(),
                 ])->visible(fn () => auth()->user()->role !== 'viewer'),
             ]);
     }
