@@ -11,6 +11,11 @@ class Pembayaran extends Model
     //
     protected $guarded = ['id'];
 
+    const BANK_ACCOUNTS = [
+        'bri' => 'BRI',
+        'mandiri' => 'MANDIRI'
+    ];
+
     public function tagihan(): BelongsTo
     {
         return $this->belongsTo(Tagihan::class);
@@ -27,7 +32,7 @@ class Pembayaran extends Model
     {
         $bulan = Carbon::now()->format('m');
         $tahun = Carbon::now()->format('Y');
-        $number = random_int(0, 999999); 
+        $number = random_int(0, 999999);
         $nomorBayar = str_pad($number, 6, '0', STR_PAD_LEFT);
 
         return "{$bulan}{$tahun}{$nomorBayar}";

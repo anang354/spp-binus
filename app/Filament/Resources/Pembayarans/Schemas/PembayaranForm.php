@@ -85,12 +85,13 @@ class PembayaranForm
                             ->columnSpan('full')
                             ->columns([
                                 'sm' => 1,
-                                'xl' => 4,
+                                'xl' => 5,
                                 '2xl' => 8,
                             ])
                             ->schema([
                                 Radio::make('metode_pembayaran')
                                     ->required()
+                                    ->live()
                                     ->options([
                                         'tunai' => 'Tunai',
                                         'transfer' => 'Transfer',
@@ -100,6 +101,16 @@ class PembayaranForm
                                         'xl' => 1,
                                         '2xl' => 1,
                                     ]),
+                                Radio::make('bank_accounts')
+                                    ->options(\App\Models\Pembayaran::BANK_ACCOUNTS)
+                                        ->visible(fn (Get $get): bool => $get('metode_pembayaran') === 'transfer')
+                                        ->afterStateUpdated(fn ($state) => $state)
+                                        ->required(fn (Get $get): bool => $get('metode_pembayaran') === 'transfer')
+                                        ->columnSpan([
+                                            'sm' => 1,
+                                            'xl' => 1,
+                                            '2xl' => 1,
+                                        ]),
                                 DatePicker::make('tanggal_pembayaran')
                                     ->default(now())
                                     ->required()
@@ -116,33 +127,29 @@ class PembayaranForm
                                     ->hintColor('primary')
                                     ->required()
                                     ->rules([
-                                        fn ($get): \Closure => function (string $attribute, $value, \Closure $fail) use ($get) {
-                                            $tagihanId = $get('tagihan_id');
-                                            if (!$tagihanId) return;
+                                        fn ($get, $record): \Closure => function (string $attribute, $value, \Closure $fail) use ($get, $record) {
+                                        $tagihanId = $get('tagihan_id');
+                                        if (!$tagihanId) return;
 
-                                            $tagihan = \App\Models\Tagihan::find($tagihanId);
-                                            if (!$tagihan) return;
+                                        $tagihan = \App\Models\Tagihan::find($tagihanId);
+                                        if (!$tagihan) return;
 
-                                            // Hitung sisa tagihan asli (tagihan_netto dikurangi pembayaran yang sudah masuk sebelumnya)
-                                            $totalTerbayar = \App\Models\Pembayaran::where('tagihan_id', $tagihanId)->sum('jumlah_dibayar');
-                                            $sisaTagihan = $tagihan->tagihan_netto - $totalTerbayar;
+                                        // Hitung total bayar dari transaksi LAIN (kecuali transaksi yang sedang diedit ini)
+                                        $totalTerbayarLainnya = \App\Models\Pembayaran::where('tagihan_id', $tagihanId)
+                                            ->where('id', '!=', $record?->id) // Mengecualikan record saat ini
+                                            ->sum('jumlah_dibayar');
 
-                                            if ($value > $sisaTagihan) {
-                                                $fail("Nominal melebihi sisa tagihan. Maksimal pembayaran adalah Rp. " . number_format($sisaTagihan, 0, ',', '.'));
-                                            }
-                                        },
-                                    ])
-                                    ->disabled(function (string $operation) {
-                                        if ($operation === 'edit') {
-                                            // Jika user punya role 'editor' atau BUKAN 'admin', maka disabled
-                                            return auth()->user()->isEditor();
+                                        $sisaTagihanAsli = $tagihan->tagihan_netto - $totalTerbayarLainnya;
+
+                                        if ($value > $sisaTagihanAsli) {
+                                            $fail("Nominal melebihi sisa tagihan. Maksimal yang bisa diinput adalah Rp. " . number_format($sisaTagihanAsli, 0, ',', '.'));
                                         }
-                                        return false;
-                                    })
+                                    },
+                                    ])
                                     ->columnSpan([
                                         'sm' => 1,
                                         'xl' => 2,
-                                        '2xl' => 5,
+                                        '2xl' => 4,
                                     ]),
                     ]),
 

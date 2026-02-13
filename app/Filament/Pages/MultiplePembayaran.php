@@ -54,21 +54,32 @@ class MultiplePembayaran extends Page implements HasForms
                 Section::make()
                     ->columns([
                         'sm' => 4,
-                        'xl' => 6,
-                        '2xl' => 7,
+                        'xl' => 8,
+                        '2xl' => 9,
                     ])
                     ->schema([
                         Radio::make('metode_pembayaran')
+                            ->live()
                             ->required()
                             ->options([
                                 'tunai' => 'Tunai',
                                 'transfer' => 'Transfer',
                             ])
                             ->columnSpan([
-                                'sm' => 2,
+                                'sm' => 1,
                                 'xl' => 2,
                                 '2xl' => 1,
                             ]),
+                        Radio::make('bank_accounts')
+                            ->options(\App\Models\Pembayaran::BANK_ACCOUNTS)
+                            ->visible(fn (Get $get): bool => $get('metode_pembayaran') === 'transfer')
+                            ->afterStateUpdated(fn ($state) => $state)
+                            ->required(fn (Get $get): bool => $get('metode_pembayaran') === 'transfer')
+                            ->columnSpan([
+                                'sm' => 1,
+                                'xl' => 2,
+                                '2xl' => 1,
+                        ]),
                         DatePicker::make('tanggal_pembayaran')
                             ->default(now())
                             ->required()
@@ -249,6 +260,7 @@ class MultiplePembayaran extends Page implements HasForms
                 'jumlah_dibayar' => $bayar['jumlah_dibayar'],
                 'tanggal_pembayaran' => $data['tanggal_pembayaran'],
                 'metode_pembayaran' => $data['metode_pembayaran'],
+                'bank_accounts' => $data['bank_accounts'] ?? null,
                 'keterangan' => $data['keterangan'] ?? null,
                 'bukti_bayar' => $data['bukti_bayar'] ?? null,
                 'nomor_bayar' => $nomorBayar,
