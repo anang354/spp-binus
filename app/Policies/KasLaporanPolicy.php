@@ -13,7 +13,7 @@ class KasLaporanPolicy
      */
     public function viewAny(User $user): bool
     {
-        return $user->isAdmin() || $user->isEditor() || $user->isViewer();
+        return $user->isAdmin() || $user->isEditor();
     }
 
     /**

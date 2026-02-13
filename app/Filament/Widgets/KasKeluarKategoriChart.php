@@ -10,16 +10,16 @@ use Illuminate\Support\Facades\DB;
 class KasKeluarKategoriChart extends ChartWidget
 {
     protected ?string $heading = 'Pengeluaran Kas Bulan Ini per Kategori';
+     protected static bool $isDiscovered = false; //sembunyikan di dashboard
 
     protected function getData(): array
     {
         $currentMonth = Carbon::now()->month;
         $currentYear = Carbon::now()->year;
 
-        // Query menjumlahkan 'jumlah' berdasarkan 'nama_kategori' untuk jenis 'keluar'
         $data = KasTransaksi::query()
             ->join('kas_kategoris', 'kas_transaksis.kas_kategori_id', '=', 'kas_kategoris.id')
-            ->where('kas_transaksis.jenis_transaksi', 'keluar') // Hanya kas keluar
+            ->where('kas_transaksis.jenis_transaksi', 'keluar')
             ->whereMonth('kas_transaksis.tanggal_transaksi', $currentMonth)
             ->whereYear('kas_transaksis.tanggal_transaksi', $currentYear)
             ->select('kas_kategoris.nama_kategori', DB::raw('SUM(kas_transaksis.jumlah) as total'))
@@ -31,7 +31,7 @@ class KasKeluarKategoriChart extends ChartWidget
                 [
                     'label' => 'Total Keluar (Rp)',
                     'data' => $data->pluck('total')->toArray(),
-                    'backgroundColor' => '#ef4444', // Warna merah untuk pengeluaran
+                    'backgroundColor' => '#ef4444',
                 ],
             ],
             'labels' => $data->pluck('nama_kategori')->toArray(),
