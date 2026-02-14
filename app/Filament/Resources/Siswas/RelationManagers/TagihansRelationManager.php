@@ -2,27 +2,33 @@
 
 namespace App\Filament\Resources\Siswas\RelationManagers;
 
-use Carbon\Carbon;
 use App\Models\Tagihan;
-use Filament\Tables\Table;
-use Filament\Schemas\Schema;
-use Filament\Actions\EditAction;
-use Filament\Actions\CreateAction;
-use Filament\Actions\DeleteAction;
+use Carbon\Carbon;
 use Filament\Actions\AssociateAction;
 use Filament\Actions\BulkActionGroup;
+use Filament\Actions\CreateAction;
+use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\DissociateAction;
-use Filament\Tables\Columns\TextColumn;
-use Filament\Forms\Components\TextInput;
-use Illuminate\Database\Eloquent\Builder;
 use Filament\Actions\DissociateBulkAction;
-use Filament\Tables\Columns\Summarizers\Sum;
+use Filament\Actions\EditAction;
+use Filament\Forms\Components\TextInput;
 use Filament\Resources\RelationManagers\RelationManager;
+use Filament\Schemas\Schema;
+use Filament\Tables\Columns\Summarizers\Sum;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 
 class TagihansRelationManager extends RelationManager
 {
     protected static string $relationship = 'tagihans';
+
+    public static function getTitle(Model $ownerRecord, string $pageClass): string
+    {
+        return 'Tagihan ' . $ownerRecord->nama_siswa;
+    }
 
     public function form(Schema $schema): Schema
     {

@@ -108,7 +108,7 @@
 </head>
 <body>
     <div class="kop-surat">
-        <img src="{{ $logo }}" alt="" width="100px"/>
+        <img src="{{ $logo }}" alt="" width="90px"/>
        <div class="header">
             <h1>{{ $dataSekolah['nama_sekolah'] }}</h1>
             <p>{{ $dataSekolah['alamat_sekolah'] }}</p>

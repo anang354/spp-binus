@@ -3,16 +3,17 @@
 
 namespace App\Filament\Actions\Tagihans;
 
-use Carbon\Carbon;
 use App\Models\Tagihan;
+use Carbon\Carbon;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Radio;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
-use Filament\Schemas\Components\Section;
-use Filament\Schemas\Components\Utilities\Set;
 use Filament\Resources\RelationManagers\RelationManager;
+use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\Utilities\Get;
+use Filament\Schemas\Components\Utilities\Set;
 
 class CreateIndividualAction
 {
@@ -29,8 +30,16 @@ class CreateIndividualAction
                 ->live()
                 ->afterStateUpdated(fn (Set $set) => $set('nama_biaya', null))
                 ->options(\App\Models\KategoriBiaya::all()->pluck('nama_kategori', 'id')->toArray()),
+                Select::make('periode_bulan')
+                ->required()
+                ->multiple()
+                ->options(Tagihan::BULAN),
+                Select::make('periode_tahun')
+                ->required()
+                ->options(Tagihan::TAHUN),
                 Select::make('nama_tagihan')
                     ->required()
+                    ->live()
                     ->options(fn (RelationManager $livewire, callable $get) =>
                     optional($livewire->getOwnerRecord()->kelas)->jenjang
                         ? \App\Models\Biaya::where('jenjang', $livewire->getOwnerRecord()->kelas->jenjang)
@@ -38,13 +47,21 @@ class CreateIndividualAction
                         ->pluck('nama_biaya', 'nama_biaya')
                         ->toArray()
                         : []
-                    ),
-                TextInput::make('nama_diskon'),
-                Select::make('periode_bulan')
-                ->multiple()
-                ->options(Tagihan::BULAN),
-                Select::make('periode_tahun')
-                ->options(Tagihan::TAHUN),
+                    )
+                    ->afterStateUpdated(function ($state, Set $set, Get $get){
+                        if($state) {
+                            $biaya = \App\Models\Biaya::where('nama_biaya', $state)
+                                ->where('kategori_biaya_id', $get('kategori_biaya_id'))
+                                ->first();
+                            if($biaya) {
+                                $nominal = (int) $biaya->nominal;
+                                $diskon = (int) ($get('jumlah_diskon') ?? 0);
+
+                                $set('jumlah_tagihan', $nominal);
+                                $set('tagihan_netto', max($nominal - $diskon, 0));
+                            }
+                        }
+                    }),
                 TextInput::make('jumlah_tagihan')->numeric()->required()
                 ->live(onBlur: true)
                 ->afterStateUpdated(function (callable $set, callable $get) {
@@ -52,6 +69,7 @@ class CreateIndividualAction
                     $diskon = (int) $get('jumlah_diskon');
                     $set('tagihan_netto', max($tagihan - $diskon, 0));
                 }),
+                TextInput::make('nama_diskon'),
                 TextInput::make('jumlah_diskon')->numeric()
                 ->default(0)
                 ->live(onBlur: true)
@@ -81,6 +99,7 @@ class CreateIndividualAction
             // Pastikan tidak ada duplikat (untuk jaga-jaga)
             foreach($data['periode_bulan'] as $bulan) {
                 $exists = Tagihan::where('siswa_id', $siswaId)
+                ->where('kategori_biaya_id', $data['kategori_biaya_id'])
                 ->where('periode_bulan', $bulan)
                 ->where('periode_tahun', $data['periode_tahun'])
                 ->where('nama_tagihan', $data['nama_tagihan'])
@@ -112,7 +131,7 @@ class CreateIndividualAction
                 'keterangan' => $data['keterangan'],
             ]);
             }
-            
+
 
             Notification::make()
                 ->title('Tagihan berhasil dibuat')
