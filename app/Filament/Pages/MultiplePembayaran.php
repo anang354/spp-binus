@@ -2,30 +2,32 @@
 
 namespace App\Filament\Pages;
 
-use UnitEnum;
+use App\Models\Pembayaran;
 use BackedEnum;
 use Carbon\Carbon;
-use Filament\Pages\Page;
-use App\Models\Pembayaran;
 use Filament\Actions\Action;
-use Filament\Schemas\Schema;
-use Illuminate\Support\Facades\DB;
-use Filament\Forms\Components\Radio;
-use Filament\Support\Icons\Heroicon;
-use Filament\Forms\Components\Select;
-use Filament\Forms\Components\Toggle;
-use Filament\Schemas\Components\Grid;
-use Filament\Support\Exceptions\Halt;
-use Filament\Forms\Contracts\HasForms;
-use Filament\Forms\Components\Repeater;
-use Filament\Forms\Components\TextInput;
-use Filament\Notifications\Notification;
-use Filament\Schemas\Components\Section;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\Radio;
+use Filament\Forms\Components\Repeater;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
+use Filament\Forms\Concerns\InteractsWithForms;
+use Filament\Forms\Contracts\HasForms;
+use Filament\Notifications\Notification;
+use Filament\Pages\Page;
+use Filament\Schemas\Components\Grid;
+use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Components\Utilities\Set;
-use Filament\Forms\Concerns\InteractsWithForms;
+use Filament\Schemas\Schema;
+use Filament\Support\Exceptions\Halt;
+use Filament\Support\Icons\Heroicon;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
+use UnitEnum;
 
 class MultiplePembayaran extends Page implements HasForms
 {
@@ -348,29 +350,14 @@ public function createAnother(): void
     $this->data['total_semua_dibayar'] = 0;
 }
     public function kirimPesanWhatsapp($pesanFinal, $target, $token) {
-        $curl = curl_init();
-            curl_setopt_array($curl, array(
-                CURLOPT_URL => 'https://api.fonnte.com/send',
-                CURLOPT_RETURNTRANSFER => true,
-                CURLOPT_ENCODING => '',
-                CURLOPT_MAXREDIRS => 10,
-                CURLOPT_TIMEOUT => 0,
-                CURLOPT_FOLLOWLOCATION => true,
-                CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
-                CURLOPT_CUSTOMREQUEST => 'POST',
-                CURLOPT_POSTFIELDS => http_build_query(array(
-                    'target' => $target,
-                    'message' => $pesanFinal,
-                )),
-                CURLOPT_HTTPHEADER => array(
-                    "Authorization: $token"
-                ),
-            ));
-            $response = curl_exec($curl);
-            if (curl_errno($curl)) {
-                $error_msg = curl_error($curl);
-                // Log error jika perlu
-            }
-            curl_close($curl);
+        $response = Http::withHeaders([
+        'Authorization' => $token,
+        ])->post('https://api.fonnte.com/send', [
+            'target' => $target,
+            'message' => $pesanFinal,
+        ]);
+        if ($response->failed()) {
+            Log::error('Gagal mengirim WA Fonnte: ' . $response->body());
+        }
     }
 }

@@ -58,7 +58,7 @@ class BroadcastTagihanAction
                         "Rp " . number_format($totalSeluruhnya, 0, ',', '.')
                     ], $templateAsli);
                     BroadcastTagihan::dispatch($pesanFinal, $target, $token)
-                        ->delay(now()->addSeconds($index * 8));
+                        ->delay(now()->addSeconds($index * 4));
                     }
                     Notification::make()
                     ->title('Pesan sedang diproses untuk dikirimkan secara bertahap.')

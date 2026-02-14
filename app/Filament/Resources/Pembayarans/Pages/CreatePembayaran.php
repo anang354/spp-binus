@@ -4,6 +4,8 @@ namespace App\Filament\Resources\Pembayarans\Pages;
 
 use App\Filament\Resources\Pembayarans\PembayaranResource;
 use Filament\Resources\Pages\CreateRecord;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 
 class CreatePembayaran extends CreateRecord
 {
@@ -66,29 +68,14 @@ class CreatePembayaran extends CreateRecord
 
     protected function kirimPesan($pesanFinal, $target, $token)
     {
-        $curl = curl_init();
-            curl_setopt_array($curl, array(
-                CURLOPT_URL => 'https://api.fonnte.com/send',
-                CURLOPT_RETURNTRANSFER => true,
-                CURLOPT_ENCODING => '',
-                CURLOPT_MAXREDIRS => 10,
-                CURLOPT_TIMEOUT => 0,
-                CURLOPT_FOLLOWLOCATION => true,
-                CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
-                CURLOPT_CUSTOMREQUEST => 'POST',
-                CURLOPT_POSTFIELDS => http_build_query(array(
-                    'target' => $target,
-                    'message' => $pesanFinal,
-                )),
-                CURLOPT_HTTPHEADER => array(
-                    "Authorization: $token"
-                ),
-            ));
-            $response = curl_exec($curl);
-            if (curl_errno($curl)) {
-                $error_msg = curl_error($curl);
-                // Log error jika perlu
-            }
-            curl_close($curl);
+        $response = Http::withHeaders([
+        'Authorization' => $token,
+        ])->post('https://api.fonnte.com/send', [
+            'target' => $target,
+            'message' => $pesanFinal,
+        ]);
+        if ($response->failed()) {
+            Log::error('Gagal mengirim WA Fonnte: ' . $response->body());
+        }
     }
 }

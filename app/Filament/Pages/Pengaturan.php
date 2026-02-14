@@ -39,8 +39,9 @@ class Pengaturan extends Page implements HasForms
         $this->record = \App\Models\Pengaturan::firstOrCreate([]);
         $this->form->fill($this->record->attributesToArray());
         // Mengambil data dari API Fonnte
+        $token = $this->record->token_wa ?? null;
         $response = \Illuminate\Support\Facades\Http::withHeaders([
-            'Authorization' => env('FONNTE_TOKEN'),
+            'Authorization' => $token,
         ])->post('https://api.fonnte.com/device');
 
         if ($response->successful()) {

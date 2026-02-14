@@ -8,4 +8,7 @@ class Pengaturan extends Model
 {
     //
     protected $guarded = ['id'];
+    protected $casts = [
+        'token_wa' => 'encrypted',
+    ];
 }
