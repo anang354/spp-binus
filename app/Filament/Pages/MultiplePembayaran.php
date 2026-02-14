@@ -95,7 +95,7 @@ class MultiplePembayaran extends Page implements HasForms
                             ->columnSpan([
                                 'sm' => 'full',
                                 'xl' => 2,
-                                '2xl' => 3,
+                                '2xl' => 4,
                             ]),
                     ]),
                 Select::make('siswa_id')

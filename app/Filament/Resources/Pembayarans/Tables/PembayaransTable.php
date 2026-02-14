@@ -50,11 +50,7 @@ class PembayaransTable
                     ->summarize(Sum::make()),
                 TextColumn::make('metode_pembayaran')
                     ->label('metode')
-                    ->badge()
-                    ->color(fn (string $state): string => match ($state) {
-                            'tunai' => 'success',
-                            'transfer' => 'warning',
-                        }),
+                    ->badge(),
                 TextColumn::make('bank_accounts')
                     ->label('Bank')
                     ->badge()

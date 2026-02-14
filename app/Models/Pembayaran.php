@@ -11,6 +11,10 @@ class Pembayaran extends Model
     //
     protected $guarded = ['id'];
 
+    protected $casts = [
+        'metode_pembayaran' => \App\Enums\MetodePembayaran::class,
+    ];
+
     const BANK_ACCOUNTS = [
         'bri' => 'BRI',
         'mandiri' => 'MANDIRI'
