@@ -54,6 +54,13 @@ class RankTagihanTable extends BaseWidget
                 TextColumn::make('sisa_tagihan')
                 ->numeric(decimalPlaces: 0)
                 ->label('Sisa Tagihan'),
+            ])
+            ->headerActions([
+                \Filament\Actions\Action::make('exportTunggakan')
+                ->label('Download Tunggakan')
+                ->icon('heroicon-o-document-arrow-down')
+                ->color('success')
+                ->action(fn () => \Maatwebsite\Excel\Facades\Excel::download(new \App\Exports\SiswaTagihanExport, 'Tunggakan_' . now()->format('M_Y') . '.xlsx')),
             ]);
     }
 }

@@ -2,10 +2,11 @@
 
 namespace App\Filament\Widgets;
 
-use Carbon\Carbon;
 use App\Models\Pembayaran;
+use Carbon\Carbon;
 use Filament\Support\RawJs;
 use Filament\Widgets\ChartWidget;
+use Illuminate\Support\Facades\DB;
 
 class PembayaranLineChart extends ChartWidget
 {
@@ -14,28 +15,30 @@ class PembayaranLineChart extends ChartWidget
 
     protected function getData(): array
     {
-        $data = collect(range(5, 0))->mapWithKeys(function ($i) {
-            $month = Carbon::now()->subMonths($i);
-            $yearMonth = $month->format('Y-m');
-
-            // Menghitung total jumlah_dibayar dari tabel pembayarans
-            $total = Pembayaran::where('tanggal_pembayaran', 'like', "{$yearMonth}%")
-                ->sum('jumlah_dibayar');
-
-            return [$month->translatedFormat('F') => $total];
-        });
+        $today = Carbon::now()->startOfMonth();
+        $months = collect();
+        for ($i = 5; $i >= 0; $i--) {
+            // Karena $today sudah tanggal 1, subMonths tidak akan error overflow lagi
+            $months->push($today->copy()->subMonths($i)->format('Y-m'));
+        }
+        $pembayaran = DB::table('pembayarans')
+            ->selectRaw("DATE_FORMAT(pembayarans.tanggal_pembayaran, '%Y-%m') as bulan, SUM(pembayarans.jumlah_dibayar) as total")
+            ->where('pembayarans.tanggal_pembayaran', '>=', $today->copy()->subMonths(4))
+            ->groupBy('bulan')
+            ->pluck('total', 'bulan');
+        $dataPembayaran = $months->mapWithKeys(fn($m) => [$m => $pembayaran[$m] ?? 0]);
 
         return [
             'datasets' => [
                 [
-                    'label' => 'Total Masuk (Rp)',
-                    'data' => $data->values()->toArray(),
+                    'label' => 'Total Pembayaran (Rp)',
+                    'data' => $dataPembayaran->values()->all(),
                     'backgroundColor' => 'rgba(59, 130, 246, 0.2)',
                     'fill' => true,
                     'tension' => 0.4,
                 ],
             ],
-            'labels' => $data->keys()->toArray(),
+            'labels' => $months->map(fn($m) => Carbon::createFromFormat('Y-m', $m)->translatedFormat('F Y'))->all(),
         ];
     }
 
