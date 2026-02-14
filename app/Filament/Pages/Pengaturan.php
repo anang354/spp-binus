@@ -3,16 +3,18 @@
 namespace App\Filament\Pages;
 
 use BackedEnum;
-use Filament\Pages\Page;
 use Filament\Actions\Action;
-use Filament\Schemas\Schema;
 use Filament\Forms\Components;
-use Illuminate\Support\HtmlString;
-use Filament\Support\Icons\Heroicon;
-use Filament\Support\Exceptions\Halt;
-use Filament\Forms\Contracts\HasForms;
-use Filament\Schemas\Components\Section;
 use Filament\Forms\Concerns\InteractsWithForms;
+use Filament\Forms\Contracts\HasForms;
+use Filament\Infolists\Components\TextEntry;
+use Filament\Pages\Page;
+use Filament\Schemas\Components\Grid;
+use Filament\Schemas\Components\Section;
+use Filament\Schemas\Schema;
+use Filament\Support\Exceptions\Halt;
+use Filament\Support\Icons\Heroicon;
+use Illuminate\Support\HtmlString;
 
 class Pengaturan extends Page implements HasForms
 {
@@ -23,6 +25,7 @@ class Pengaturan extends Page implements HasForms
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedCog6Tooth;
 
     public ?array $data = [];
+    public ?array $deviceData = [];
 
     public ?\App\Models\Pengaturan $record = null;
 
@@ -35,30 +38,71 @@ class Pengaturan extends Page implements HasForms
     {
         $this->record = \App\Models\Pengaturan::firstOrCreate([]);
         $this->form->fill($this->record->attributesToArray());
+        // Mengambil data dari API Fonnte
+        $response = \Illuminate\Support\Facades\Http::withHeaders([
+            'Authorization' => env('FONNTE_TOKEN'),
+        ])->post('https://api.fonnte.com/device');
+
+        if ($response->successful()) {
+            $this->deviceData = $response->json();
+        }
+    }
+    public function infolist(Schema $schema): Schema
+    {
+        return $schema
+            ->state($this->deviceData) // Memasukkan data JSON tadi sebagai state
+            ->components([
+                Section::make('Informasi Perangkat Fonnte')
+                    ->description('Status koneksi dan sisa kuota pengiriman pesan.')
+                    ->schema([
+                        Grid::make(3)
+                            ->schema([
+                                TextEntry::make('name')
+                                    ->label('Nama Perangkat')
+                                    ->weight('bold'),
+
+                                TextEntry::make('device')
+                                    ->label('Nomor WhatsApp'),
+
+                                TextEntry::make('device_status')
+                                    ->label('Status Koneksi')
+                                    ->badge()
+                                    ->color(fn (string $state): string => match ($state) {
+                                        'connect' => 'success',
+                                        'disconnect' => 'danger',
+                                        default => 'gray',
+                                    }),
+
+                                TextEntry::make('package')
+                                    ->label('Paket'),
+
+                                TextEntry::make('quota')
+                                    ->label('Sisa Kuota Pesan')
+                                    ->numeric(),
+
+                                TextEntry::make('expired')
+                                    ->label('Masa Aktif')
+                                    ->icon('heroicon-m-calendar-days'),
+
+                                TextEntry::make('messages')
+                                    ->label('Total Pesan Terkirim')
+                                    ->numeric(),
+                            ]),
+                    ])->columns(1),
+            ]);
     }
     public static function form(Schema $schema): Schema
     {
         return $schema
             ->components([
-                Section::make('informasi_sekolah')
-                    ->schema([
-                        Components\TextInput::make('nama_sekolah')
-                            ->label('Nama Sekolah'),
-                        Components\TextInput::make('alamat_sekolah')
-                            ->prefixIcon(Heroicon::OutlinedMapPin)
-                            ->label('Alamat Sekolah'),
-                        Components\TextInput::make('telepon_sekolah')
-                            ->numeric()
-                            ->prefixIcon(Heroicon::OutlinedPhone)
-                            ->label('Telepon Sekolah'),
-                        Components\FileUpload::make('logo_sekolah')
-                            ->label('Logo Sekolah')
-                            ->disk('public')
-                            ->image()
-                            ->imageEditor(),
-                    ])
-                    ->columns(2),
-                Section::make('Pesan WhhatsApp')
+                Grid::make([
+                    'md' => 1,
+                    'lg' => 3,
+                ])
+                ->schema([
+
+                Section::make('Pesan WhatsApp')
+                    ->columnSpan(2)
                     ->schema([
                         Components\TextInput::make('token_wa')
                             ->label('Token WhatsApp'),
@@ -88,7 +132,28 @@ class Pengaturan extends Page implements HasForms
                                                 ')),
                     ])
                     ->columns(2),
-            ])->statePath('data');;
+                    Section::make('Informasi Sekolah')
+                    ->columnSpan(1)
+                    ->schema([
+                        Components\TextInput::make('nama_sekolah')
+                            ->prefixIcon(Heroicon::BuildingLibrary)
+                            ->label('Nama Sekolah'),
+                        Components\TextInput::make('alamat_sekolah')
+                            ->prefixIcon(Heroicon::OutlinedMapPin)
+                            ->label('Alamat Sekolah'),
+                        Components\TextInput::make('telepon_sekolah')
+                            ->numeric()
+                            ->prefixIcon(Heroicon::OutlinedPhone)
+                            ->label('Telepon Sekolah'),
+                        Components\FileUpload::make('logo_sekolah')
+                            ->label('Logo Sekolah')
+                            ->disk('public')
+                            ->image()
+                            ->imageEditor(),
+                    ]),
+                ])
+            ])
+            ->statePath('data');
     }
     protected function getFormActions(): array
     {
