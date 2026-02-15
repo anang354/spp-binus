@@ -32,7 +32,7 @@
             padding:15px 0px;
         }
         .kop-surat h1 {
-            font-size: 14pt;
+            font-size: 18pt;
             margin:0;
             padding: 0;
         }

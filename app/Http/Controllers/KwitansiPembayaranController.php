@@ -3,8 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\Pembayaran;
-use Illuminate\Http\Request;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Contracts\Encryption\DecryptException;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Crypt;
 
 class KwitansiPembayaranController extends Controller
 {
@@ -40,13 +42,19 @@ class KwitansiPembayaranController extends Controller
     }
     public function verification($encrypted_nomor)
     {
-        $pengaturan = \App\Models\Pengaturan::select('nama_sekolah', 'logo_sekolah', 'telepon_sekolah')->first();
-        $nomorBayar = \Illuminate\Support\Facades\Crypt::decryptString($encrypted_nomor);
-        $checkPembayaran = Pembayaran::where('nomor_bayar', $nomorBayar)->with(['siswa'])->get();
-        if(!$checkPembayaran){
+        try {
+            $nomorBayar = Crypt::decryptString($encrypted_nomor);
+        } catch (DecryptException $e) {
             return abort(404);
         }
-        return view('verification-payment', [
+        $pengaturan = \App\Models\Pengaturan::select('nama_sekolah', 'logo_sekolah', 'telepon_sekolah')->first();
+        $checkPembayaran = Pembayaran::where('nomor_bayar', $nomorBayar)
+        ->with(['siswa'])
+        ->get();
+        if($checkPembayaran->isEmpty()){
+            return abort(404);
+        }
+        return view('payments', [
                 'nomor_bayar' => $nomorBayar,
                 'pembayaran' => $checkPembayaran,
                 'pengaturan' => $pengaturan,
