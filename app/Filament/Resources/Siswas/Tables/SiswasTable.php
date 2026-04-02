@@ -26,31 +26,31 @@ class SiswasTable
         $bulan = $now->month;
         $periodeAngka = $now->format('Ym'); // contoh: 202507 (untuk Juli 2025)
         $querySiswa = Siswa::query()
-             ->select('siswas.*')
+            ->select('siswas.*')
 
-        // Total tagihan
-        ->selectSub(function ($query) use ($periodeAngka) {
-            $query->from('tagihans')
-                ->selectRaw('COALESCE(SUM(tagihan_netto), 0)')
-                ->whereColumn('tagihans.siswa_id', 'siswas.id')
-                ->whereRaw("DATE_FORMAT(jatuh_tempo, '%Y%m') <= ?", [$periodeAngka]);
-        }, 'total_tagihan')
+            // Total tagihan
+            ->selectSub(function ($query) use ($periodeAngka) {
+                $query->from('tagihans')
+                    ->selectRaw('COALESCE(SUM(tagihan_netto), 0)')
+                    ->whereColumn('tagihans.siswa_id', 'siswas.id')
+                    ->whereRaw("DATE_FORMAT(jatuh_tempo, '%Y%m') <= ?", [$periodeAngka]);
+            }, 'total_tagihan')
 
-        // Total pembayaran
-        ->selectSub(function ($query) use ($periodeAngka) {
-            $query->from('pembayarans')
-                ->selectRaw('COALESCE(SUM(jumlah_dibayar), 0)')
-                ->whereColumn('pembayarans.siswa_id', 'siswas.id')
-                ->whereExists(function ($sub) use ($periodeAngka) {
-                    $sub->selectRaw(1)
-                        ->from('tagihans')
-                        ->whereColumn('tagihans.id', 'pembayarans.tagihan_id')
-                        ->whereRaw("DATE_FORMAT(jatuh_tempo, '%Y%m') <= ?", [$periodeAngka]);
-                });
-        }, 'total_dibayar')
+            // Total pembayaran
+            ->selectSub(function ($query) use ($periodeAngka) {
+                $query->from('pembayarans')
+                    ->selectRaw('COALESCE(SUM(jumlah_dibayar), 0)')
+                    ->whereColumn('pembayarans.siswa_id', 'siswas.id')
+                    ->whereExists(function ($sub) use ($periodeAngka) {
+                        $sub->selectRaw(1)
+                            ->from('tagihans')
+                            ->whereColumn('tagihans.id', 'pembayarans.tagihan_id')
+                            ->whereRaw("DATE_FORMAT(jatuh_tempo, '%Y%m') <= ?", [$periodeAngka]);
+                    });
+            }, 'total_dibayar')
 
-        // Selisih tagihan dan pembayaran
-        ->selectRaw("
+            // Selisih tagihan dan pembayaran
+            ->selectRaw("
             (
                 (SELECT COALESCE(SUM(tagihan_netto), 0)
                 FROM tagihans
@@ -109,6 +109,12 @@ class SiswasTable
             ])
             ->filters([
                 TrashedFilter::make(),
+                \Filament\Tables\Filters\SelectFilter::make('kelas_id')
+                    ->label('Berdasarkan Kelas')
+                    ->relationship('kelas', 'nama_kelas')
+                    ->preload()
+                    ->multiple()
+                    ->searchable(),
             ])
             ->recordActions([
                 \Filament\Actions\Action::make('lihat-pdf')
@@ -116,7 +122,7 @@ class SiswasTable
                     ->label('Kartu SPP')
                     ->icon('heroicon-o-document-arrow-down')
                     ->url(function ($record) {
-                        return url('/admin/siswas/kartu-spp/'.$record->id);
+                        return url('/admin/siswas/kartu-spp/' . $record->id);
                     })
                     ->openUrlInNewTab(),
                 EditAction::make(),
@@ -128,7 +134,7 @@ class SiswasTable
                     DeleteBulkAction::make(),
                     ForceDeleteBulkAction::make(),
                     RestoreBulkAction::make(),
-                ])->visible(fn () => auth()->user()->role !== 'viewer'),
+                ])->visible(fn() => auth()->user()->role !== 'viewer'),
             ]);
     }
 }
