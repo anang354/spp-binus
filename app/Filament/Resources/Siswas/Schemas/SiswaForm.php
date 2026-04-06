@@ -24,7 +24,7 @@ class SiswaForm
                 TextInput::make('nama_siswa')
                     ->required(),
                 Radio::make('jenis_kelamin')
-                    ->options(['laki-laki' => 'Laki laki', 'perempuan' => 'Perempuan'])
+                    ->options(\App\Enums\Gender::class)
                     ->required(),
                 TextInput::make('nama_wali')
                     ->default(null),

@@ -21,10 +21,10 @@ class KasKategori extends Page implements HasTable
     use InteractsWithTable;
     protected string $view = 'filament.pages.kategori-biaya';
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedTag;
-    protected static string | UnitEnum | null $navigationGroup = 'Buku Kas';
+    protected static string|UnitEnum|null $navigationGroup = 'Buku Kas';
     protected static ?int $navigationSort = 2;
 
-    public static function canAccess() : bool
+    public static function canAccess(): bool
     {
         return auth()->user()->role === 'admin' || auth()->user()->role === 'editor';
     }
@@ -58,8 +58,11 @@ class KasKategori extends Page implements HasTable
                     ->slideOver()
                     ->color('primary')
                     ->form(static::getKasKategoriForm()),
-                \Filament\Actions\DeleteAction::make(),
-                \Filament\Actions\RestoreAction::make(),     // Tombol untuk memulihkan data
+                \Filament\Actions\DeleteAction::make()
+                    ->visible(function ($record) {
+                        return $record->id !== 1;
+                    }),
+                \Filament\Actions\RestoreAction::make(),
                 \Filament\Actions\ForceDeleteAction::make(),
             ])
             ->bulkActions([
@@ -74,11 +77,11 @@ class KasKategori extends Page implements HasTable
     {
         return [
             CreateAction::make()
-            ->label('Buat Kategori Kas')
-            ->model(\App\Models\KasKategori::class)
-            ->slideOver()
-            ->icon(Heroicon::OutlinedPlus)
-            ->form(static::getKasKategoriForm()),
+                ->label('Buat Kategori Kas')
+                ->model(\App\Models\KasKategori::class)
+                ->slideOver()
+                ->icon(Heroicon::OutlinedPlus)
+                ->form(static::getKasKategoriForm()),
         ];
     }
 }

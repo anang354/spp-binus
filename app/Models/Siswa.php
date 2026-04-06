@@ -14,6 +14,10 @@ class Siswa extends Model
     //
     protected $guarded = ['id'];
 
+    protected $casts = [
+        'jenis_kelamin' => \App\Enums\Gender::class,
+    ];
+
     use SoftDeletes;
 
     public function kelas(): BelongsTo

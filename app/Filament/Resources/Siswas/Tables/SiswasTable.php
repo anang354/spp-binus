@@ -16,6 +16,7 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Filters\TrashedFilter;
 use Filament\Actions\ForceDeleteBulkAction;
+use Filament\Tables\Filters\SelectFilter;
 
 class SiswasTable
 {
@@ -82,7 +83,8 @@ class SiswasTable
                     ->searchable(),
                 TextColumn::make('kelas.nama_kelas')
                     ->sortable(),
-                TextColumn::make('jenis_kelamin'),
+                TextColumn::make('jenis_kelamin')
+                    ->badge(),
                 TextColumn::make('nama_wali')
                     ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('nomor_hp')
@@ -109,12 +111,15 @@ class SiswasTable
             ])
             ->filters([
                 TrashedFilter::make(),
-                \Filament\Tables\Filters\SelectFilter::make('kelas_id')
+                SelectFilter::make('kelas_id')
                     ->label('Berdasarkan Kelas')
                     ->relationship('kelas', 'nama_kelas')
                     ->preload()
                     ->multiple()
                     ->searchable(),
+                SelectFilter::make('jenis_kelamin')
+                    ->label('Jenis Kelamin')
+                    ->options(\App\Enums\Gender::class),
             ])
             ->recordActions([
                 \Filament\Actions\Action::make('lihat-pdf')
